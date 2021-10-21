@@ -1,21 +1,23 @@
 from django.shortcuts import redirect, render , HttpResponse
-from .models import Room
+from .models import Room ,Topic
 from .forms import RoomForm
-# from django.
+from django.db.models import Q
 # rooms=[
 #     {'id':1,'name':'Room 1'},
 #     {'id':2 , 'name':'Room 2'},
 # ]
 # Create your views here.
 def home(request):
-    rooms = Room.objects.all()
-    context = { 'rooms':rooms}
+    q = request.GET.get('q','')
+    rooms = Room.objects.filter(Q(topic__name__icontains=q)|
+    Q(name__icontains=q)|
+    Q(description__icontains=q))
+    topics = Topic.objects.all()
+    context = { 'rooms':rooms,'topics':topics}
     return render(request,'base/home.html',context)
 def  room(request,pk):
     room = Room.objects.get(id=int(pk))
-    # for i in rooms:
-    #     if i['id'] == int(pk):
-    #         room=i
+    
     context ={'room':room}
     return render(request,'base/room.html',context)
 
