@@ -61,17 +61,23 @@ def register_page(request):
     context={'form':form}
     return render(request,'base/login_register.html',context)
 
+def user_profile(request,pk):
+    user = User.objects.get(id=pk)
+    room_msg=user.message_set.all()
+    rooms=user.room_set.all()
+    topics = Topic.objects.all()
+    context={'user':user,'room_msg':room_msg,'rooms':rooms,'topics':topics}
+    return render(request,'base/user_profile.html',context)
 
 def home(request):
-    
-
     q = request.GET.get('q','')
     rooms = Room.objects.filter(Q(topic__name__icontains=q)|
     Q(name__icontains=q)|
     Q(description__icontains=q))
     room_count = rooms.count()
     topics = Topic.objects.all()
-    context = { 'rooms':rooms,'topics':topics,'room_count':room_count}
+    room_msg = Message.objects.filter(Q(room__topic__name__icontains=q))
+    context = { 'rooms':rooms,'topics':topics,'room_count':room_count,'room_msg':room_msg}
     return render(request,'base/home.html',context)
 
 def  room(request,pk):
@@ -126,4 +132,15 @@ def delete_room(request,pk):
         room.delete()
         return redirect('home')
     context ={'obj':room}
+    return render(request,'base/delete.html',context)
+
+@login_required(login_url='login')
+def delete_message(request,pk):
+    message = Message.objects.get(id=pk)
+    if request.user != message.user:
+        return HttpResponse('you are not allowed here!')
+    if request.method == "POST":
+        message.delete()
+        return redirect('home')
+    context ={'obj':message}
     return render(request,'base/delete.html',context)
